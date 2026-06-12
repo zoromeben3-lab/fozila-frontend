@@ -6,7 +6,7 @@
 const FOZILA = {
 API: window.location.hostname === 'localhost' 
   ? '/api' 
-  : 'https://fozila-backend.onrender.com/api',
+  : 'https://fozila-frontend-xk23.onrender.com',
   _cache: { albums: null, singles: null, announcements: null },
 
   // ── APPEL API GÉNÉRIQUE ──
