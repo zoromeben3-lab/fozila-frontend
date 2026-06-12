@@ -440,22 +440,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:url('bg
       <div class="field"><label>Genre</label><input type="text" id="edit-si-genre"></div>
       <div class="field"><label>Prix</label><input type="number" id="edit-si-price"></div>
     </div>
-    <div class="field"><label>🖼️ Changer la pochette (optionnel)</label>
-      <div class="upload-zone" id="edit-si-cover-zone" onclick="document.getElementById('edit-si-cover-input').click()" style="cursor:pointer;">
-        <input type="file" id="edit-si-cover-input" accept="image/*" style="display:none;" onchange="handleCover(this,'edit-si-prev','edit-si-cover-zone')">
-        <div class="upload-icon">🖼️</div><p>Cliquez pour changer l'image</p>
-      </div>
-      <img id="edit-si-prev" style="display:none;width:60px;height:60px;object-fit:cover;border-radius:8px;margin-top:6px;">
-    </div>
-    <div class="field"><label>🎵 Fichier MP3</label>
-      <div class="upload-zone" id="edit-si-audio-zone" onclick="document.getElementById('edit-si-audio-file').click()" style="cursor:pointer;">
-        <input type="file" id="edit-si-audio-file" accept="audio/*,.mp3,.wav" style="display:none;" onchange="handleAudio(this,'edit-si-audio-zone','edit-si-audio-name')">
-        <div class="upload-icon">🎵</div>
-        <p>Cliquez pour sélectionner le MP3</p>
-        <div class="hint">MP3 ou WAV · Max 100 Mo</div>
-      </div>
-      <div id="edit-si-audio-name" style="font-size:0.75rem;color:var(--green);margin-top:5px;display:none;"></div>
-    </div>
     <div style="display:flex;gap:9px;margin-top:6px;">
       <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="closeModal('m-edit-single')">Annuler</button>
       <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="updateSingle()">💾 Enregistrer</button>
@@ -583,7 +567,7 @@ async function saveAlbum(draft) {
   const coverFile = document.getElementById('al-cover-input') ? document.getElementById('al-cover-input').files[0] : null;
   if (coverFile) formData.append('cover', coverFile);
   try {
-    const res  = await fetch('/api/albums', { method:'POST', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:formData });
+    const res  = await fetch(FOZILA.API+'/albums', { method:'POST', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:formData });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     // Upload tous les MP3 en une seule requête
@@ -593,7 +577,7 @@ async function saveAlbum(draft) {
       for (let i = 0; i < audioFiles.length; i++) {
         af.append('audio', audioFiles[i]);
       }
-      const audioRes = await fetch('/api/albums/'+data.album.id+'/audio', {
+      const audioRes = await fetch(FOZILA.API+'/albums/'+data.album.id+'/audio', {
         method: 'PUT',
         headers: { 'Authorization': 'Bearer ' + FOZILA.getToken() },
         body: af
@@ -639,12 +623,12 @@ async function updateAlbum() {
   const coverFile = document.getElementById('edit-al-cover-input'); 
   if (coverFile && coverFile.files[0]) formData.append('cover', coverFile.files[0]);
   try {
-    const res = await fetch('/api/albums/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:formData });
+    const res = await fetch(FOZILA.API+'/albums/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:formData });
     if (!res.ok) throw new Error((await res.json()).error);
     const audioFile = document.getElementById('edit-al-audio-file');
     if (audioFile && audioFile.files[0]) {
       const af = new FormData(); af.append('audio', audioFile.files[0]);
-      await fetch('/api/albums/'+id+'/audio', { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:af });
+      await fetch(FOZILA.API+'/albums/'+id+'/audio', { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:af });
     }
     closeModal('m-edit-album'); renderAlbums();
     toast('✓ Album mis à jour', 'success');
@@ -655,7 +639,7 @@ async function deleteAlbum(id) {
   const a = _albumsCache.find(x=>x.id===id);
   if (!a || !confirm('Supprimer "'+a.title+'" ?')) return;
   try {
-    const res = await fetch('/api/albums/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
+    const res = await fetch(FOZILA.API+'/albums/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
     if (!res.ok) throw new Error((await res.json()).error);
     renderAlbums(); renderDash(); toast('Album supprimé');
   } catch(err) { toast('Erreur suppression', 'error'); }
@@ -665,7 +649,7 @@ async function toggleFeaturedAlbum(id) {
   const a = _albumsCache.find(x=>x.id===id); if(!a) return;
   const f = new FormData(); f.append('featured', a.featured ? '0' : '1');
   try {
-    await fetch('/api/albums/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:f });
+    await fetch(FOZILA.API+'/albums/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:f });
     toast(a.featured ? 'Retiré de la vedette' : '⭐ Album mis en vedette', 'success');
     renderAlbums(); renderFeatured();
   } catch(err) { toast('Erreur', 'error'); }
@@ -713,7 +697,7 @@ async function saveSingle(draft) {
   if (coverFile && coverFile.files[0]) formData.append('cover', coverFile.files[0]);
 
   try {
-    const res = await fetch('/api/singles', {
+    const res = await fetch(FOZILA.API+'/singles', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + FOZILA.getToken() },
       body: formData
@@ -729,7 +713,7 @@ async function saveSingle(draft) {
       toast('⏳ Upload audio en cours…', 'info');
       const af = new FormData();
       af.append('audio', audioFile);
-      const audioRes = await fetch('/api/singles/' + data.single.id + '/audio', {
+      const audioRes = await fetch(FOZILA.API+'/singles/' + data.single.id + '/audio', {
         method:  'PUT',
         headers: { 'Authorization': 'Bearer ' + FOZILA.getToken() },
         body:    af
@@ -757,74 +741,33 @@ async function saveSingle(draft) {
 }
 
 async function openEditSingle(id) {
-  const si = _singlesCache.find(x=>x.id===id); if(!si) return;
+  const s = _singlesCache.find(x=>x.id===id); if(!s) return;
   document.getElementById('edit-si-id').value    = id;
-  document.getElementById('edit-si-title').value  = si.title;
-  document.getElementById('edit-si-genre').value  = si.genre;
-  document.getElementById('edit-si-price').value  = si.price;
-
-  // Afficher la cover existante
-  const prev = document.getElementById('edit-si-prev');
-  if (si.cover_path && prev) { prev.src = si.cover_path; prev.style.display = 'block'; }
-  else if (prev) prev.style.display = 'none';
-
-  // Reset zone audio
-  const audioZone = document.getElementById('edit-si-audio-zone');
-  if (audioZone) audioZone.querySelector('p').textContent = si.file_path ? '✓ Fichier audio déjà présent — cliquez pour remplacer' : 'Cliquez pour sélectionner le MP3';
-  if (audioZone) audioZone.style.borderColor = si.file_path ? 'var(--green)' : '';
-  const audioName = document.getElementById('edit-si-audio-name');
-  if (audioName) audioName.style.display = 'none';
-
+  document.getElementById('edit-si-title').value  = s.title;
+  document.getElementById('edit-si-genre').value  = s.genre;
+  document.getElementById('edit-si-price').value  = s.price;
   openModal('m-edit-single');
 }
 
 async function updateSingle() {
   const id = parseInt(document.getElementById('edit-si-id').value);
-
-  // Étape 1 : Mettre à jour les infos + cover
   const formData = new FormData();
   formData.append('title', document.getElementById('edit-si-title').value.trim());
   formData.append('genre', document.getElementById('edit-si-genre').value.trim());
   formData.append('price', document.getElementById('edit-si-price').value);
-  const coverInput = document.getElementById('edit-si-cover-input');
-  if (coverInput && coverInput.files[0]) formData.append('cover', coverInput.files[0]);
-
   try {
-    const res = await fetch('/api/singles/'+id, {
-      method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + FOZILA.getToken() },
-      body: formData
-    });
+    const res = await fetch(FOZILA.API+'/singles/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:formData });
     if (!res.ok) throw new Error((await res.json()).error);
-
-    // Étape 2 : Upload audio si fourni
-    const audioInput = document.getElementById('edit-si-audio-file');
-    if (audioInput && audioInput.files[0]) {
-      toast('⏳ Upload audio en cours…', 'info');
-      const af = new FormData();
-      af.append('audio', audioInput.files[0]);
-      const audioRes = await fetch('/api/singles/'+id+'/audio', {
-        method: 'PUT',
-        headers: { 'Authorization': 'Bearer ' + FOZILA.getToken() },
-        body: af
-      });
-      const audioData = await audioRes.json();
-      if (!audioRes.ok) toast('⚠️ Erreur audio : ' + audioData.error, 'error');
-      else toast('✅ ' + audioData.message, 'success');
-    }
-
-    closeModal('m-edit-single');
-    FOZILA._cache.singles = null;
-    renderSingles();
-    if (!audioInput || !audioInput.files[0]) toast('✓ Single mis à jour', 'success');
-  } catch(err) { toast(err.message || 'Erreur', 'error'); }
+    closeModal('m-edit-single'); renderSingles();
+    toast('✓ Single mis à jour','success');
+  } catch(err) { toast(err.message||'Erreur','error'); }
 }
 
 async function deleteSingle(id) {
   const s = _singlesCache.find(x=>x.id===id);
   if (!s||!confirm('Supprimer "'+s.title+'" ?')) return;
   try {
-    await fetch('/api/singles/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
+    await fetch(FOZILA.API+'/singles/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
     renderSingles(); toast('Single supprimé');
   } catch(err) { toast('Erreur suppression','error'); }
 }
@@ -833,7 +776,7 @@ async function toggleFeaturedSingle(id) {
   const s = _singlesCache.find(x=>x.id===id); if(!s) return;
   const f = new FormData(); f.append('featured', s.featured ? '0' : '1');
   try {
-    await fetch('/api/singles/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:f });
+    await fetch(FOZILA.API+'/singles/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:f });
     toast(s.featured?'Retiré':'⭐ Single mis en vedette','success');
     renderSingles(); renderFeatured();
   } catch(err) { toast('Erreur','error'); }
@@ -845,7 +788,7 @@ async function renderSingles() {
   // Charger TOUS les singles (y compris brouillons) pour l'admin
   let all = singles;
   try {
-    const res = await fetch('/api/singles', { headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
+    const res = await fetch(FOZILA.API+'/singles', { headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
     all = await res.json();
     _singlesCache = all;
   } catch {}
@@ -904,13 +847,13 @@ async function renderUsers() {
 let _annCache = [];
 async function renderAnn() {
   try {
-    const res = await fetch('/api/announcements', { headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
+    const res = await fetch(FOZILA.API+'/announcements', { headers:{'Authorization':'Bearer '+FOZILA.getToken()} });
     // Charger la liste complète avec IDs via admin
     const full = await FOZILA.api('GET', '/admin/stats'); // on utilise une autre approche
   } catch {}
   // Fallback : charger via endpoint public
   try {
-    const res = await fetch('/api/announcements');
+    const res = await fetch(FOZILA.API+'/announcements');
     const list = await res.json();
     document.getElementById('ann-list').innerHTML = list.length
       ? list.map((a,i)=>`<div class="ann-row"><span>${a}</span></div>`).join('')
