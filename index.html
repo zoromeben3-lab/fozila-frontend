@@ -143,7 +143,7 @@
         albumsGrid.innerHTML += `
           <a href="album-detail.html?id=${a.id}" class="album-card">
             <div class="album-cover" style="background:${a.grad}">
-              ${a.cover_path ? `<img src="${a.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : a.emoji}
+              ${a.cover_path ? `<img src="${a.cover_path.startsWith('http') ? a.cover_path : 'https://fozila-backend.onrender.com' + a.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : a.emoji}
               ${a.tag ? `<span class="album-tag">${a.tag}</span>` : ''}
               ${a.featured ? '<span class="featured-star">⭐</span>' : ''}
             </div>
@@ -169,7 +169,7 @@
         singlesGrid.innerHTML += `
           <a href="singles.html?id=${s.id}" class="single-card">
             <div class="single-cover" style="background:${s.grad}">
-              ${s.cover_path ? `<img src="${s.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : s.emoji}
+              ${s.cover_path ? `<img src="${s.cover_path.startsWith('http') ? s.cover_path : 'https://fozila-backend.onrender.com' + s.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : s.emoji}
               <span class="featured-star">⭐</span>
             </div>
             <div class="single-info">

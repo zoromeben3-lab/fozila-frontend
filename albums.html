@@ -120,7 +120,7 @@
       grid.innerHTML = list.map((a, i) => `
         <a href="album-detail.html?id=${a.id}" class="album-card">
           <div class="album-cover" style="background:${a.grad}">
-            ${a.cover_path ? `<img src="${a.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : a.emoji}
+            ${a.cover_path ? `<img src="${a.cover_path.startsWith('http') ? a.cover_path : 'https://fozila-backend.onrender.com' + a.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : a.emoji}
             ${a.tag ? `<span class="album-tag">${a.tag}</span>` : ''}
             ${owned[i] ? `<span class="owned-badge">✓ Acheté</span>` : ''}
             ${a.featured ? `<span class="featured-star">⭐</span>` : ''}

@@ -4,9 +4,9 @@
 // ═══════════════════════════════════════════════════════
 
 const FOZILA = {
-API: window.location.hostname === 'localhost'
-  ? '/api'
-  : 'https://fozila-backend.onrender.com/api',
+API: window.location.hostname === 'localhost' 
+  ? '/api' 
+  : 'https://fozila-frontend-xk23.onrender.com',
   _cache: { albums: null, singles: null, announcements: null },
 
   // ── APPEL API GÉNÉRIQUE ──
@@ -69,8 +69,7 @@ API: window.location.hostname === 'localhost'
   // ── TÉLÉCHARGEMENT ──
   download(token) {
     if (!token) { this.toast('Token manquant', 'error'); return; }
-    const base = window.location.hostname === 'localhost' ? '' : 'https://fozila-backend.onrender.com';
-    window.location.href = base + `/api/download/${token}`;
+    window.location.href = `/api/download/${token}`;
   },
 
   // ── ANNONCES ──
@@ -95,6 +94,16 @@ API: window.location.hostname === 'localhost'
 
   // ── UTILS ──
   fmt(n) { return Number(n).toLocaleString('fr-FR') + ' FCFA'; },
+
+  // Convertir un chemin relatif en URL absolue vers le backend
+  mediaUrl(path) {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const base = window.location.hostname === 'localhost'
+      ? ''
+      : 'https://fozila-backend.onrender.com';
+    return base + path;
+  },
   timeAgo(iso) {
     const diff = Date.now() - new Date(iso).getTime();
     const m = Math.floor(diff / 60000);

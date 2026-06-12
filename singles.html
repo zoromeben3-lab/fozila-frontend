@@ -99,7 +99,7 @@
       grid.innerHTML = allSingles.map((s, i) => `
         <div class="single-card">
           <div class="single-cover" style="background:${s.grad}">
-            ${s.cover_path ? `<img src="${s.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : s.emoji}
+            ${s.cover_path ? `<img src="${s.cover_path.startsWith('http') ? s.cover_path : 'https://fozila-backend.onrender.com' + s.cover_path}" style="width:100%;height:100%;object-fit:cover;">` : s.emoji}
             ${s.featured ? '<span class="featured-star">⭐</span>' : ''}
           </div>
           <div class="single-info">
@@ -144,10 +144,7 @@
       document.getElementById('now-playing-banner').style.display = 'flex';
       document.getElementById('np-btn').textContent = '⏸';
 
-      const _base = window.location.hostname === 'localhost' ? '' : 'https://fozila-backend.onrender.com';
-      const _audioUrl = s.file_path ? (_base + s.file_path) : null;
-      if (!_audioUrl) { FOZILA.toast('Extrait non disponible', 'info'); return; }
-      _audioEl = new Audio(_audioUrl);
+      _audioEl = new Audio(s.file_path);
       _audioEl.volume = 0.8;
       _audioEl.play().catch(() => FOZILA.toast('Lecture impossible', 'error'));
 
