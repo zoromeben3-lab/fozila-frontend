@@ -4,9 +4,9 @@
 // ═══════════════════════════════════════════════════════
 
 const FOZILA = {
-API: window.location.hostname === 'localhost' 
-  ? '/api' 
-  : 'https://fozila-frontend-xk23.onrender.com',
+API: window.location.hostname === 'localhost'
+  ? '/api'
+  : 'https://fozila-backend.onrender.com/api',
   _cache: { albums: null, singles: null, announcements: null },
 
   // ── APPEL API GÉNÉRIQUE ──
@@ -69,7 +69,8 @@ API: window.location.hostname === 'localhost'
   // ── TÉLÉCHARGEMENT ──
   download(token) {
     if (!token) { this.toast('Token manquant', 'error'); return; }
-    window.location.href = `/api/download/${token}`;
+    const base = window.location.hostname === 'localhost' ? '' : 'https://fozila-backend.onrender.com';
+    window.location.href = base + `/api/download/${token}`;
   },
 
   // ── ANNONCES ──
