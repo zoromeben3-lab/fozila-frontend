@@ -328,16 +328,14 @@
 
     async function confirmPayment() {
       const num    = document.getElementById('pay-number').value.trim();
-      const method = document.querySelector('.pay-method.selected')?.dataset.m || 'orange_money';
+      const method = document.querySelector('.pay-method.selected')?.textContent?.trim().toLowerCase().replace(' ','_') || 'orange_money';
       if (!num) { FOZILA.toast('Entrez votre numéro de paiement', 'error'); return; }
       document.getElementById('pay-modal').classList.add('hidden');
       FOZILA.toast('⏳ Paiement en cours de traitement…', 'info');
       try {
         await FOZILA.purchase(album.id, 'album', method, num);
-        FOZILA.toast('✅ Paiement validé ! Redirection vers Mon espace…', 'success');
-        setTimeout(() => {
-          location.href = 'dashboard.html?album=' + album.id;
-        }, 1500);
+        FOZILA.toast('✅ Paiement validé ! Album disponible.', 'success');
+        setTimeout(() => location.reload(), 1500);
       } catch(err) {
         FOZILA.toast(err.message || 'Erreur de paiement', 'error');
       }

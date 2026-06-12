@@ -144,15 +144,11 @@
       document.getElementById('now-playing-banner').style.display = 'flex';
       document.getElementById('np-btn').textContent = '⏸';
 
-      const _url = s.file_path.startsWith('http') ? s.file_path : window.location.origin + s.file_path;
-      _audioEl = new Audio(_url);
+      const _base = window.location.hostname === 'localhost' ? '' : 'https://fozila-backend.onrender.com';
+      const _audioUrl = s.file_path ? (_base + s.file_path) : null;
+      if (!_audioUrl) { FOZILA.toast('Extrait non disponible', 'info'); return; }
+      _audioEl = new Audio(_audioUrl);
       _audioEl.volume = 0.8;
-
-      // Afficher durée réelle
-      _audioEl.addEventListener('loadedmetadata', () => {
-        const t = Math.floor(_audioEl.duration);
-        document.getElementById('np-dur').textContent = Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
-      });
       _audioEl.play().catch(() => FOZILA.toast('Lecture impossible', 'error'));
 
       // Arrêter après 30 secondes (extrait)
@@ -221,13 +217,11 @@
       const method = document.querySelector('.pay-method.selected')?.dataset.m || 'orange_money';
       if (!num) { FOZILA.toast('Entrez votre numéro', 'error'); return; }
       document.getElementById('buy-single-modal').classList.add('hidden');
-      FOZILA.toast('⏳ Paiement en cours…', 'info');
+      FOZILA.toast('Paiement en cours…', 'info');
       try {
         await FOZILA.purchase(currentSingleId, 'single', method, num);
-        FOZILA.toast('✅ Single acheté ! Redirection vers Mon espace…', 'success');
-        setTimeout(() => {
-          location.href = 'dashboard.html?single=' + currentSingleId;
-        }, 1500);
+        FOZILA.toast('✓ Single acheté ! Disponible au téléchargement.', 'success');
+        await renderSingles();
       } catch(err) {
         FOZILA.toast(err.message || 'Erreur de paiement', 'error');
       }

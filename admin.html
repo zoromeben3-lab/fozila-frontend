@@ -350,7 +350,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:url('bg
     <div class="field"><label>Tag (optionnel)</label><input type="text" id="al-tag" placeholder="Nouveau, Populaire…"></div>
     <div class="field"><label>🎵 Fichiers MP3 des titres (sélection multiple)</label>
       <div class="upload-zone" id="al-audio-zone" onclick="document.getElementById('al-audio-file').click()">
-        <input type="file" id="al-audio-file" accept=".mp3,.wav" multiple style="display:none" onchange="handleMultiAudio(this)">
+        <input type="file" id="al-audio-file" accept="audio/*,.mp3,.wav" multiple style="display:none;position:absolute;" onchange="handleMultiAudio(this)">
         <div class="upload-icon">🎵</div>
         <p>Cliquez pour sélectionner les MP3</p>
         <div class="hint">MP3 ou WAV · Sélection multiple · Max 100 Mo chacun</div>
@@ -385,8 +385,8 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:url('bg
     </div>
     <div class="field"><label>Description</label><textarea id="edit-al-desc"></textarea></div>
     <div class="field"><label>🎵 Remplacer le fichier audio (optionnel)</label>
-      <div class="upload-zone" id="edit-al-audio-zone">
-        <input type="file" id="edit-al-audio-file" accept=".mp3,.wav,.zip" onchange="handleAudio(this,'edit-al-audio-zone','edit-al-audio-name')">
+      <div class="upload-zone" id="edit-al-audio-zone" onclick="document.getElementById('edit-al-audio-file').click()" style="cursor:pointer;">
+        <input type="file" id="edit-al-audio-file" accept="audio/*,.mp3,.wav" multiple style="display:none;" onchange="handleMultiAudio2(this,'edit-al-audio-zone','edit-al-audio-name')">
         <div class="upload-icon">🎵</div><p>Nouveau fichier audio</p><div class="hint">MP3, WAV ou ZIP</div>
       </div>
       <div id="edit-al-audio-name" style="font-size:0.75rem;color:var(--green);margin-top:5px;display:none;"></div>
@@ -439,6 +439,22 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:url('bg
     <div class="field-row">
       <div class="field"><label>Genre</label><input type="text" id="edit-si-genre"></div>
       <div class="field"><label>Prix</label><input type="number" id="edit-si-price"></div>
+    </div>
+    <div class="field"><label>🖼️ Changer la pochette (optionnel)</label>
+      <div class="upload-zone" id="edit-si-cover-zone" onclick="document.getElementById('edit-si-cover-input').click()" style="cursor:pointer;">
+        <input type="file" id="edit-si-cover-input" accept="image/*" style="display:none;" onchange="handleCover(this,'edit-si-prev','edit-si-cover-zone')">
+        <div class="upload-icon">🖼️</div><p>Cliquez pour changer l'image</p>
+      </div>
+      <img id="edit-si-prev" class="cover-prev" style="display:none;margin-top:6px;">
+    </div>
+    <div class="field"><label>🎵 Fichier MP3 (optionnel)</label>
+      <div class="upload-zone" id="edit-si-audio-zone" onclick="document.getElementById('edit-si-audio-file').click()" style="cursor:pointer;">
+        <input type="file" id="edit-si-audio-file" accept="audio/*,.mp3,.wav" style="display:none;" onchange="handleAudio(this,'edit-si-audio-zone','edit-si-audio-name')">
+        <div class="upload-icon">🎵</div>
+        <p>Cliquez pour sélectionner le MP3</p>
+        <div class="hint">MP3 ou WAV · Max 100 Mo</div>
+      </div>
+      <div id="edit-si-audio-name" style="font-size:0.75rem;color:var(--green);margin-top:5px;display:none;"></div>
     </div>
     <div style="display:flex;gap:9px;margin-top:6px;">
       <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="closeModal('m-edit-single')">Annuler</button>
@@ -741,11 +757,30 @@ async function saveSingle(draft) {
 }
 
 async function openEditSingle(id) {
-  const s = _singlesCache.find(x=>x.id===id); if(!s) return;
+  const si = _singlesCache.find(x=>x.id===id); if(!si) return;
   document.getElementById('edit-si-id').value    = id;
-  document.getElementById('edit-si-title').value  = s.title;
-  document.getElementById('edit-si-genre').value  = s.genre;
-  document.getElementById('edit-si-price').value  = s.price;
+  document.getElementById('edit-si-title').value  = si.title;
+  document.getElementById('edit-si-genre').value  = si.genre;
+  document.getElementById('edit-si-price').value  = si.price;
+
+  // Cover existante
+  const prev = document.getElementById('edit-si-prev');
+  if (prev) {
+    if (si.cover_path) { prev.src = si.cover_path; prev.style.display = 'block'; }
+    else prev.style.display = 'none';
+  }
+  // Zone audio
+  const audioZone = document.getElementById('edit-si-audio-zone');
+  if (audioZone) {
+    const p = audioZone.querySelector('p');
+    if (p) p.textContent = si.file_path ? '✓ Audio présent — cliquez pour remplacer' : 'Cliquez pour sélectionner le MP3';
+    audioZone.style.borderColor = si.file_path ? 'var(--green)' : '';
+  }
+  const audioInput = document.getElementById('edit-si-audio-file');
+  if (audioInput) audioInput.value = '';
+  const audioName = document.getElementById('edit-si-audio-name');
+  if (audioName) { audioName.style.display = 'none'; }
+
   openModal('m-edit-single');
 }
 
@@ -755,11 +790,30 @@ async function updateSingle() {
   formData.append('title', document.getElementById('edit-si-title').value.trim());
   formData.append('genre', document.getElementById('edit-si-genre').value.trim());
   formData.append('price', document.getElementById('edit-si-price').value);
+  const coverInput = document.getElementById('edit-si-cover-input');
+  if (coverInput && coverInput.files[0]) formData.append('cover', coverInput.files[0]);
   try {
     const res = await fetch(FOZILA.API+'/singles/'+id, { method:'PUT', headers:{'Authorization':'Bearer '+FOZILA.getToken()}, body:formData });
     if (!res.ok) throw new Error((await res.json()).error);
-    closeModal('m-edit-single'); renderSingles();
-    toast('✓ Single mis à jour','success');
+    // Upload audio si fourni
+    const audioInput = document.getElementById('edit-si-audio-file');
+    if (audioInput && audioInput.files[0]) {
+      toast('⏳ Upload audio en cours…', 'info');
+      const af = new FormData();
+      af.append('audio', audioInput.files[0]);
+      const audioRes = await fetch(FOZILA.API+'/singles/'+id+'/audio', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + FOZILA.getToken() },
+        body: af
+      });
+      const audioData = await audioRes.json();
+      if (!audioRes.ok) toast('⚠️ Erreur audio : ' + audioData.error, 'error');
+      else toast('✅ ' + audioData.message, 'success');
+    }
+    closeModal('m-edit-single');
+    FOZILA._cache.singles = null;
+    renderSingles();
+    if (!audioInput || !audioInput.files[0]) toast('✓ Single mis à jour', 'success');
   } catch(err) { toast(err.message||'Erreur','error'); }
 }
 
