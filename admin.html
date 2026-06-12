@@ -386,7 +386,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:url('bg
     <div class="field"><label>Description</label><textarea id="edit-al-desc"></textarea></div>
     <div class="field"><label>🎵 Remplacer le fichier audio (optionnel)</label>
       <div class="upload-zone" id="edit-al-audio-zone" onclick="document.getElementById('edit-al-audio-file').click()" style="cursor:pointer;">
-        <input type="file" id="edit-al-audio-file" accept="audio/*,.mp3,.wav" multiple style="display:none;" onchange="handleMultiAudio2(this,'edit-al-audio-zone','edit-al-audio-name')">
+        <input type="file" id="edit-al-audio-file" accept="audio/*,.mp3,.wav" multiple style="display:none;position:absolute;" onchange="handleMultiAudio2(this,'edit-al-audio-zone','edit-al-audio-name')">
         <div class="upload-icon">🎵</div><p>Nouveau fichier audio</p><div class="hint">MP3, WAV ou ZIP</div>
       </div>
       <div id="edit-al-audio-name" style="font-size:0.75rem;color:var(--green);margin-top:5px;display:none;"></div>
@@ -549,6 +549,20 @@ function handleMultiAudio(input) {
     </div>`).join('');
 }
 
+// ── MULTI AUDIO HANDLER 2 (edit album) ──
+function handleMultiAudio2(input, zoneId, nameId) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const zone = document.getElementById(zoneId);
+  if (zone) {
+    zone.style.borderColor = 'var(--green)';
+    const p = zone.querySelector('p');
+    if (p) p.textContent = '✓ ' + files.length + ' fichier(s) sélectionné(s)';
+  }
+  const nameEl = document.getElementById(nameId);
+  if (nameEl) { nameEl.textContent = files.map(f => f.name).join(', '); nameEl.style.display = 'block'; }
+}
+
 // ── AUDIO HANDLER ──
 function handleAudio(input, zoneId, nameId) {
   if (!input.files[0]) return;
@@ -673,9 +687,9 @@ async function toggleFeaturedAlbum(id) {
 
 async function renderAlbums() {
   try {
+    FOZILA._cache.albums = null; // vider le cache avant de charger
     const albums = await FOZILA.getAlbums();
     _albumsCache = albums;
-    FOZILA._cache.albums = null; // vider le cache pour forcer rechargement
     document.getElementById('albums-tbody').innerHTML = albums.length
       ? albums.map(a=>`
         <tr>
